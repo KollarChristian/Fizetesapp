@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0d0c" />
+  <title>Fizetés Számláló</title>
+  <style>
+    :root{
+      --bg:#0b0d0c;
+      --card:#151916;
+      --card2:#1c211d;
+      --text:#f5f7f5;
+      --muted:#9ca79f;
+      --green:#39d66f;
+      --green2:#24ad55;
+      --orange:#ff9e38;
+      --red:#ff5c5c;
+      --border:#293029;
+      --shadow:0 12px 32px rgba(0,0,0,.28);
+    }
+    *{box-sizing:border-box}
+    html,body{touch-action:manipulation}
+    button{touch-action:manipulation}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:linear-gradient(180deg,#090b0a 0%,#111511 100%);
+      color:var(--text);
+      min-height:100vh;
+    }
+    button,input{font:inherit}
+    button{-webkit-tap-highlight-color:transparent}
+    .app{
+      width:min(100%,520px);
+      margin:auto;
+      padding:calc(18px + env(safe-area-inset-top)) 16px calc(92px + env(safe-area-inset-bottom));
+    }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:16px;
+    }
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{
+      width:46px;height:46px;border-radius:15px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--green),var(--orange));
+      color:#081009;font-weight:900;font-size:22px;
+      box-shadow:var(--shadow);
+    }
+    h1{font-size:21px;margin:0}
+    .subtitle{color:var(--muted);font-size:13px;margin-top:3px}
+    .icon-btn{
+      width:44px;height:44px;border-radius:14px;border:1px solid var(--border);
+      background:var(--card);color:var(--text);font-size:20px;
+    }
+    .balance-card{
+      background:
+        radial-gradient(circle at 95% 0%,rgba(57,214,111,.22),transparent 38%),
+        linear-gradient(145deg,#172019,#111512);
+      border:1px solid #2b392e;
+      border-radius:24px;padding:22px;box-shadow:var(--shadow);
+    }
+    .label{color:var(--muted);font-size:14px}
+    .balance{font-size:40px;font-weight:900;letter-spacing:-1.5px;margin:6px 0 8px}
+    .balance-foot{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+    .quick-grid{
+      display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;
+    }
+    .quick-btn{
+      border:0;border-radius:20px;padding:18px 12px;
+      font-weight:850;font-size:17px;color:#071009;
+      min-height:84px;box-shadow:var(--shadow);
+    }
+    .quick-btn span{display:block;font-size:13px;margin-top:4px;opacity:.72}
+    .full{background:linear-gradient(135deg,#54e886,var(--green2))}
+    .half{background:linear-gradient(135deg,#ffb458,var(--orange))}
+    .secondary-row{
+      display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;
+    }
+    .secondary{
+      border:1px solid var(--border);background:var(--card);color:var(--text);
+      border-radius:16px;padding:14px 10px;font-weight:750;
+    }
+    .section-title{
+      display:flex;justify-content:space-between;align-items:center;
+      margin:24px 2px 11px;
+    }
+    .calendar-card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:22px;padding:16px;box-shadow:var(--shadow);
+    }
+    .calendar-head{
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+    }
+    .calendar-head strong{font-size:17px;text-transform:capitalize}
+    .calendar-nav{
+      width:40px;height:40px;border-radius:13px;border:1px solid var(--border);
+      background:var(--card2);color:var(--text);font-size:21px;font-weight:800;
+    }
+    .weekdays,.calendar-grid{
+      display:grid;grid-template-columns:repeat(7,1fr);gap:6px;
+    }
+    .weekdays div{
+      text-align:center;color:var(--muted);font-size:11px;font-weight:800;padding:5px 0;
+    }
+    .cal-day{
+      position:relative;aspect-ratio:1/1;border-radius:13px;border:1px solid transparent;
+      background:#101411;color:var(--text);display:flex;align-items:center;
+      justify-content:center;font-size:14px;font-weight:750;padding:0;
+    }
+    .cal-day.other{opacity:.3}
+    .cal-day.today{border-color:var(--green)}
+    .cal-day.selected{outline:2px solid var(--orange);outline-offset:1px}
+    .cal-day.full-day{background:rgba(57,214,111,.19)}
+    .cal-day.half-day{background:rgba(255,158,56,.20)}
+    .cal-day.mixed-day{
+      background:linear-gradient(135deg,rgba(57,214,111,.22) 0 50%,rgba(255,158,56,.23) 50%);
+    }
+    .cal-day.paid-day::after{
+      content:"✓";position:absolute;right:4px;bottom:2px;color:#7fb0ff;
+      font-size:10px;font-weight:900;
+    }
+    .calendar-legend{
+      display:flex;flex-wrap:wrap;gap:10px;margin-top:13px;color:var(--muted);font-size:11px;
+    }
+    .legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px}
+    .selected-day-panel{
+      margin-top:12px;padding:14px;border-radius:16px;background:#0e120f;
+      border:1px solid var(--border);
+    }
+    .selected-day-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .selected-day-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:11px}
+    .selected-day-actions button{
+      border:1px solid var(--border);background:var(--card2);color:var(--text);
+      border-radius:12px;padding:10px 5px;font-size:12px;font-weight:800;
+    }
+    .day-entries{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.55}
+    .section-title h2{font-size:17px;margin:0}
+    .section-title small{color:var(--muted)}
+    .goal-card{
+      padding:18px;border-radius:20px;background:var(--card);
+      border:1px solid var(--border);margin-top:14px;
+    }
+    .goal-top{display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .goal-top strong{font-size:18px}
+    .goal-top button{
+      border:1px solid var(--border);background:var(--card2);color:var(--text);
+      border-radius:12px;padding:9px 11px;font-weight:750;
+    }
+    .progress{
+      height:13px;background:#090c0a;border-radius:999px;overflow:hidden;margin:14px 0 8px;
+      border:1px solid var(--border);
+    }
+    .progress-fill{
+      height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--orange));
+      border-radius:999px;transition:.35s;
+    }
+    .goal-foot{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
+    .stats{
+      display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
+    }
+    .stat{
+      padding:16px;border-radius:18px;background:var(--card);
+      border:1px solid var(--border);
+    }
+    .stat strong{font-size:22px;display:block;margin-top:6px}
+    .stat small{color:var(--muted)}
+    .list{display:flex;flex-direction:column;gap:9px}
+    .item{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:14px;border:1px solid var(--border);border-radius:17px;background:var(--card);
+    }
+    .item-left{display:flex;align-items:center;gap:11px;min-width:0}
+    .dot{
+      width:10px;height:10px;border-radius:50%;background:var(--green);flex:0 0 auto;
+      box-shadow:0 0 0 5px rgba(57,214,111,.10);
+    }
+    .dot.half{background:var(--orange);box-shadow:0 0 0 5px rgba(255,158,56,.10)}
+    .dot.paid{background:#6fa8ff;box-shadow:0 0 0 5px rgba(111,168,255,.10)}
+    .item-title{font-weight:780;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .item-sub{font-size:12px;color:var(--muted);margin-top:3px}
+    .amount{font-weight:850;white-space:nowrap}
+    .empty{
+      text-align:center;color:var(--muted);padding:24px;border:1px dashed var(--border);
+      border-radius:17px;
+    }
+    .danger{color:#ff8585}
+    .pay-btn{
+      position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      width:min(calc(100% - 32px),488px);
+      border:0;border-radius:18px;padding:17px;
+      background:linear-gradient(135deg,var(--green),#2bbd61);
+      color:#071009;font-size:17px;font-weight:900;box-shadow:0 12px 34px rgba(57,214,111,.24);
+    }
+    dialog{
+      width:min(calc(100% - 28px),480px);
+      border:1px solid var(--border);border-radius:22px;
+      background:#111512;color:var(--text);padding:0;box-shadow:var(--shadow);
+    }
+    dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
+    .modal{padding:20px}
+    .modal h3{margin:0 0 8px}
+    .modal p{color:var(--muted);font-size:14px;line-height:1.5}
+    .input{
+      width:100%;border:1px solid var(--border);border-radius:15px;
+      background:#0b0e0c;color:var(--text);padding:15px;margin-top:10px;
+      outline:none;
+    }
+    .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+    .modal-actions button{
+      border:1px solid var(--border);border-radius:15px;padding:14px;font-weight:800;
+      background:var(--card2);color:var(--text);
+    }
+    .modal-actions .confirm{background:var(--green);color:#071009;border:0}
+    .backup-actions{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+    .backup-actions button,.file-label{
+      border:1px solid var(--border);border-radius:15px;padding:14px;
+      background:var(--card2);color:var(--text);font-weight:800;text-align:center;
+    }
+    #importFile{display:none}
+    .toast{
+      position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top));
+      transform:translate(-50%,-120px);opacity:0;
+      background:#f4f6f4;color:#101310;padding:11px 16px;border-radius:14px;
+      font-weight:780;transition:.25s;z-index:99;box-shadow:var(--shadow);
+    }
+    .toast.show{transform:translate(-50%,0);opacity:1}
+    @media(max-width:370px){
+      .balance{font-size:34px}
+      .quick-btn{font-size:15px}
+    }
+  </style>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+
+  <main class="app">
+    <header>
+      <div class="brand">
+        <div class="logo">Ft</div>
+        <div>
+          <h1>Fizetés Számláló</h1>
+          <div class="subtitle" id="todayText"></div>
+        </div>
+      </div>
+      <button class="icon-btn" id="settingsBtn" aria-label="Biztonsági mentés">⚙️</button>
+    </header>
+
+    <section class="balance-card">
+      <div class="label">Jelenleg kifizetetlen összeg</div>
+      <div class="balance" id="balance">0 Ft</div>
+      <div class="balance-foot">
+        <span id="unpaidDays">0 munkanap</span>
+        <span id="monthTotal">Ebben a hónapban: 0 Ft</span>
+      </div>
+    </section>
+
+    <section class="goal-card">
+      <div class="goal-top">
+        <div>
+          <div class="label">Fizetési cél</div>
+          <strong id="goalTitle">Nincs beállítva</strong>
+        </div>
+        <button id="goalBtn">Cél beállítása</button>
+      </div>
+      <div class="progress"><div class="progress-fill" id="goalProgress"></div></div>
+      <div class="goal-foot">
+        <span id="goalCurrent">0 Ft</span>
+        <span id="goalRemaining">Hátralévő: 0 Ft</span>
+      </div>
+    </section>
+
+    <section class="quick-grid">
+      <button class="quick-btn full" id="fullDayBtn">+ Teljes nap<span>20 000 Ft</span></button>
+      <button class="quick-btn half" id="halfDayBtn">+ Fél nap<span>10 000 Ft</span></button>
+    </section>
+
+    <section class="secondary-row">
+      <button class="secondary" id="customBtn">✍️ Egyedi összeg</button>
+      <button class="secondary" id="undoBtn">↩️ Visszavonás</button>
+    </section>
+
+
+    <div class="section-title">
+      <h2>Naptár</h2>
+      <small>Koppints egy napra</small>
+    </div>
+    <section class="calendar-card">
+      <div class="calendar-head">
+        <button class="calendar-nav" id="prevMonthBtn" aria-label="Előző hónap">‹</button>
+        <strong id="calendarMonth"></strong>
+        <button class="calendar-nav" id="nextMonthBtn" aria-label="Következő hónap">›</button>
+      </div>
+      <div class="weekdays">
+        <div>H</div><div>K</div><div>Sze</div><div>Cs</div><div>P</div><div>Szo</div><div>V</div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+      <div class="calendar-legend">
+        <span><i class="legend-dot" style="background:var(--green)"></i>Teljes nap</span>
+        <span><i class="legend-dot" style="background:var(--orange)"></i>Fél nap</span>
+        <span><i class="legend-dot" style="background:#7fb0ff"></i>Kifizetve</span>
+      </div>
+      <div class="selected-day-panel">
+        <div class="selected-day-top">
+          <strong id="selectedDayTitle">Válassz egy napot</strong>
+          <span id="selectedDayTotal">0 Ft</span>
+        </div>
+        <div class="selected-day-actions">
+          <button id="calendarFullBtn">+ Teljes</button>
+          <button id="calendarHalfBtn">+ Fél</button>
+          <button id="calendarCustomBtn">+ Egyedi</button>
+        </div>
+        <div class="day-entries" id="selectedDayEntries">Az adott nap bejegyzései itt jelennek meg.</div>
+      </div>
+    </section>
+
+    <div class="section-title">
+      <h2>Statisztika</h2>
+      <small id="statPeriod">Összesen</small>
+    </div>
+
+    <section class="stats">
+      <div class="stat"><small>Teljes napok</small><strong id="fullCount">0</strong></div>
+      <div class="stat"><small>Fél napok</small><strong id="halfCount">0</strong></div>
+      <div class="stat"><small>Napi átlag</small><strong id="dailyAverage">0 Ft</strong></div>
+      <div class="stat"><small>Összes kereset</small><strong id="allTimeTotal">0 Ft</strong></div>
+      <div class="stat"><small>Leghosszabb sorozat</small><strong id="bestStreak">0 nap</strong></div>
+      <div class="stat"><small>Aktuális sorozat</small><strong id="currentStreak">0 nap</strong></div>
+      <div class="stat" style="grid-column:1/-1"><small>Legutóbbi fizetés dátuma</small><strong id="lastPaymentDate">Még nem volt</strong></div>
+    </section>
+
+    <div class="section-title">
+      <h2>Legutóbbi bejegyzések</h2>
+      <small id="entryCount">0 bejegyzés</small>
+    </div>
+    <section class="list" id="historyList"></section>
+  </main>
+
+  <button class="pay-btn" id="paidBtn">💸 Kifizetve</button>
+
+  <dialog id="customDialog">
+    <div class="modal">
+      <h3>Egyedi összeg hozzáadása</h3>
+      <p>Írd be, mennyit kerestél az adott napon.</p>
+      <input class="input" id="customAmount" type="number" inputmode="numeric" min="1" placeholder="Például: 25000" />
+      <input class="input" id="customNote" type="text" maxlength="80" placeholder="Megjegyzés, például: túlóra" />
+      <div class="modal-actions">
+        <button onclick="customDialog.close()">Mégse</button>
+        <button class="confirm" id="saveCustomBtn">Hozzáadás</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="goalDialog">
+    <div class="modal">
+      <h3>Fizetési cél beállítása</h3>
+      <p>Adj meg egy összeget, amit szeretnél elérni. A folyamatjelző automatikusan frissül.</p>
+      <input class="input" id="goalAmount" type="number" inputmode="numeric" min="0" placeholder="Például: 500000" />
+      <div class="modal-actions">
+        <button onclick="goalDialog.close()">Mégse</button>
+        <button class="confirm" id="saveGoalBtn">Mentés</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="payDialog">
+    <div class="modal">
+      <h3>Kifizetés rögzítése</h3>
+      <p id="payDialogText"></p>
+      <div class="modal-actions">
+        <button onclick="payDialog.close()">Mégse</button>
+        <button class="confirm" id="confirmPaidBtn">Kifizetve</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <div class="modal">
+      <h3>Adatok és biztonsági mentés</h3>
+      <p>Az adatok ezen a készüléken, a böngészőben maradnak. Készíts mentést, hogy telefoncsere vagy törlés esetén is visszaállíthatók legyenek.</p>
+      <div class="backup-actions">
+        <button id="exportBtn">⬇️ Biztonsági mentés letöltése</button>
+        <button id="csvBtn">📊 Excel/CSV export</button>
+        <label class="file-label" for="importFile">⬆️ Biztonsági mentés visszaállítása</label>
+        <input id="importFile" type="file" accept=".json,application/json" />
+        <button id="clearBtn" class="danger">🗑️ Összes adat törlése</button>
+        <button onclick="settingsDialog.close()">Bezárás</button>
+      </div>
+    </div>
+  </dialog>
+
+<script>
+const STORAGE_KEY = "salary_counter_v2";
+let data = loadData();
+
+const $ = id => document.getElementById(id);
+const money = n => new Intl.NumberFormat("hu-HU").format(Math.round(n || 0)) + " Ft";
+const dateTime = value => new Intl.DateTimeFormat("hu-HU", {
+  year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"
+}).format(new Date(value));
+
+function loadData(){
+  try{
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(parsed && Array.isArray(parsed.entries)) return parsed;
+  }catch(e){}
+  return { entries: [], goal: 0 };
+}
+function saveData(){
+  if(typeof data.goal !== "number") data.goal = 0;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  render();
+}
+function toast(msg){
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"), 1800);
+}
+function addWork(type, amount, note="", selectedDate=null){
+  let created = new Date();
+  if(selectedDate){
+    const now = new Date();
+    created = new Date(selectedDate);
+    created.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
+  }
+  data.entries.unshift({
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()),
+    type, amount, note,
+    paid:false,
+    createdAt:created.toISOString()
+  });
+  saveData();
+  toast("Hozzáadva: " + money(amount));
+}
+function unpaidEntries(){
+  return data.entries.filter(e => e.type !== "payment" && !e.paid);
+}
+function markPaid(){
+  const unpaid = unpaidEntries();
+  const total = unpaid.reduce((s,e)=>s+Number(e.amount||0),0);
+  if(!total) return toast("Nincs kifizetetlen összeg.");
+  const ids = unpaid.map(e=>e.id);
+  data.entries.forEach(e => { if(ids.includes(e.id)) e.paid = true; });
+  data.entries.unshift({
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()),
+    type:"payment", amount:total,
+    createdAt:new Date().toISOString()
+  });
+  saveData();
+  $("payDialog").close();
+  toast("Kifizetés rögzítve.");
+}
+function undo(){
+  if(!data.entries.length) return toast("Nincs mit visszavonni.");
+  const removed = data.entries.shift();
+  if(removed.type === "payment"){
+    let remaining = Number(removed.amount);
+    for(const e of data.entries){
+      if(e.type !== "payment" && e.paid && remaining > 0){
+        e.paid = false;
+        remaining -= Number(e.amount||0);
+      }
+    }
+  }
+  saveData();
+  toast("Utolsó művelet visszavonva.");
+}
+function getStreaks(work){
+  const days = [...new Set(work.map(e=>{
+    const d = new Date(e.createdAt);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  }))].sort((a,b)=>a-b);
+  if(!days.length) return {current:0,best:0};
+  let best=1, run=1;
+  for(let i=1;i<days.length;i++){
+    const diff=(days[i]-days[i-1])/86400000;
+    if(diff===1) run++;
+    else if(diff>1) run=1;
+    best=Math.max(best,run);
+  }
+  let current=1;
+  for(let i=days.length-1;i>0;i--){
+    const diff=(days[i]-days[i-1])/86400000;
+    if(diff===1) current++;
+    else break;
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const last = new Date(days[days.length-1]);
+  const gap=(today-last)/86400000;
+  if(gap>1) current=0;
+  return {current,best};
+}
+function exportCsv(){
+  const rows = [["Dátum","Típus","Összeg","Megjegyzés","Állapot"]];
+  data.entries.forEach(e=>{
+    const type = e.type==="full" ? "Teljes nap" :
+                 e.type==="half" ? "Fél nap" :
+                 e.type==="custom" ? "Egyedi összeg" : "Kifizetés";
+    const status = e.type==="payment" ? "Kifizetés" : (e.paid ? "Kifizetve" : "Nincs kifizetve");
+    rows.push([dateTime(e.createdAt),type,e.amount||0,e.note||"",status]);
+  });
+  const csv = "\uFEFF" + rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(";")).join("\n");
+  const blob = new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="fizetes-kimutatas-"+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("CSV kimutatás elkészült.");
+}
+function render(){
+  const work = data.entries.filter(e=>e.type !== "payment");
+  const unpaid = work.filter(e=>!e.paid);
+  const balance = unpaid.reduce((s,e)=>s+Number(e.amount||0),0);
+  const now = new Date();
+  const thisMonth = work.filter(e=>{
+    const d = new Date(e.createdAt);
+    return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  });
+  const totalAll = work.reduce((s,e)=>s+Number(e.amount||0),0);
+  const uniqueDays = new Set(work.map(e=>new Date(e.createdAt).toDateString())).size;
+  const avg = uniqueDays ? totalAll / uniqueDays : 0;
+  const streaks = getStreaks(work);
+  const goal = Number(data.goal || 0);
+  const progress = goal > 0 ? Math.min(100, (totalAll / goal) * 100) : 0;
+
+  $("balance").textContent = money(balance);
+  $("unpaidDays").textContent = unpaid.length + " kifizetetlen bejegyzés";
+  $("monthTotal").textContent = "Ebben a hónapban: " + money(thisMonth.reduce((s,e)=>s+Number(e.amount||0),0));
+  $("fullCount").textContent = work.filter(e=>e.type==="full").length;
+  $("halfCount").textContent = work.filter(e=>e.type==="half").length;
+  $("dailyAverage").textContent = money(avg);
+  $("allTimeTotal").textContent = money(totalAll);
+  $("bestStreak").textContent = streaks.best + " nap";
+  $("currentStreak").textContent = streaks.current + " nap";
+  const lastPayment = data.entries.find(e => e.type === "payment");
+  $("lastPaymentDate").textContent = lastPayment
+    ? new Intl.DateTimeFormat("hu-HU", {year:"numeric", month:"long", day:"numeric", hour:"2-digit", minute:"2-digit"}).format(new Date(lastPayment.createdAt))
+    : "Még nem volt";
+  $("goalTitle").textContent = goal > 0 ? money(goal) : "Nincs beállítva";
+  $("goalCurrent").textContent = money(totalAll);
+  $("goalRemaining").textContent = goal > 0 ? "Hátralévő: " + money(Math.max(0, goal-totalAll)) : "Állíts be egy célt";
+  $("goalProgress").style.width = progress + "%";
+  $("goalBtn").textContent = goal > 0 ? "Módosítás" : "Cél beállítása";
+  $("entryCount").textContent = data.entries.length + " bejegyzés";
+
+  renderCalendar();
+  const list = $("historyList");
+  list.innerHTML = "";
+  if(!data.entries.length){
+    list.innerHTML = '<div class="empty">Még nincs bejegyzés. Add hozzá az első munkanapodat!</div>';
+    return;
+  }
+  data.entries.slice(0,40).forEach(e=>{
+    const item = document.createElement("div");
+    item.className = "item";
+    let title, dotClass="", prefix="+";
+    if(e.type==="full") title="Teljes nap";
+    else if(e.type==="half"){title="Fél nap";dotClass="half";}
+    else if(e.type==="custom") title=e.note || "Egyedi összeg";
+    else {title="Kifizetés";dotClass="paid";prefix="-";}
+    const status = e.type==="payment" ? "Rögzített kifizetés" : (e.paid ? "Kifizetve" : "Nincs kifizetve");
+    item.innerHTML = `
+      <div class="item-left">
+        <span class="dot ${dotClass}"></span>
+        <div>
+          <div class="item-title">${escapeHtml(title)}</div>
+          <div class="item-sub">${dateTime(e.createdAt)} · ${status}</div>
+        </div>
+      </div>
+      <div class="amount">${prefix}${money(e.amount)}</div>`;
+    list.appendChild(item);
+  });
+}
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+function exportBackup(){
+  const blob = new Blob([JSON.stringify({
+    app:"Fizetés Számláló",
+    version:2,
+    exportedAt:new Date().toISOString(),
+    data
+  }, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url;
+  a.download="fizetes-mentes-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("Biztonsági mentés elkészült.");
+}
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      const incoming = parsed.data || parsed;
+      if(!incoming || !Array.isArray(incoming.entries)) throw new Error();
+      data = incoming;
+      saveData();
+      $("settingsDialog").close();
+      toast("Mentés sikeresen visszaállítva.");
+    }catch(e){
+      alert("Ez nem megfelelő biztonsági mentés.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+$("todayText").textContent = new Intl.DateTimeFormat("hu-HU", {
+  weekday:"long", year:"numeric", month:"long", day:"numeric"
+}).format(new Date());
+
+$("prevMonthBtn").onclick=()=>{
+  calendarCursor.setMonth(calendarCursor.getMonth()-1);
+  selectedCalendarDate=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth(),1);
+  renderCalendar();
+};
+$("nextMonthBtn").onclick=()=>{
+  calendarCursor.setMonth(calendarCursor.getMonth()+1);
+  selectedCalendarDate=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth(),1);
+  renderCalendar();
+};
+$("calendarFullBtn").onclick=()=>addWork("full",20000,"",selectedCalendarDate);
+$("calendarHalfBtn").onclick=()=>addWork("half",10000,"",selectedCalendarDate);
+$("calendarCustomBtn").onclick=()=>{
+  $("customAmount").dataset.calendarDate=selectedCalendarDate.toISOString();
+  $("customDialog").showModal();
+};
+$("fullDayBtn").onclick=()=>addWork("full",20000);
+$("halfDayBtn").onclick=()=>addWork("half",10000);
+$("customBtn").onclick=()=>{
+  delete $("customAmount").dataset.calendarDate;
+  $("customDialog").showModal();
+};
+$("undoBtn").onclick=undo;
+$("saveCustomBtn").onclick=()=>{
+  const amount=Number($("customAmount").value);
+  const note=$("customNote").value.trim();
+  if(!amount || amount<1) return toast("Adj meg egy megfelelő összeget.");
+  const calendarDate = $("customAmount").dataset.calendarDate;
+  addWork("custom",amount,note,calendarDate ? new Date(calendarDate) : null);
+  delete $("customAmount").dataset.calendarDate;
+  $("customAmount").value="";
+  $("customNote").value="";
+  $("customDialog").close();
+};
+$("paidBtn").onclick=()=>{
+  const total=unpaidEntries().reduce((s,e)=>s+Number(e.amount||0),0);
+  if(!total) return toast("Nincs kifizetetlen összeg.");
+  $("payDialogText").textContent="Biztosan kifizetettként jelölöd ezt az összeget: "+money(total)+"?";
+  $("payDialog").showModal();
+};
+$("confirmPaidBtn").onclick=markPaid;
+$("settingsBtn").onclick=()=>$("settingsDialog").showModal();
+$("goalBtn").onclick=()=>{
+  $("goalAmount").value = data.goal || "";
+  $("goalDialog").showModal();
+};
+$("saveGoalBtn").onclick=()=>{
+  const value=Number($("goalAmount").value);
+  if(value<0) return toast("Adj meg megfelelő összeget.");
+  data.goal=value;
+  saveData();
+  $("goalDialog").close();
+  toast(value ? "Cél elmentve." : "Cél törölve.");
+};
+$("exportBtn").onclick=exportBackup;
+$("csvBtn").onclick=exportCsv;
+$("importFile").onchange=e=>e.target.files[0] && importBackup(e.target.files[0]);
+$("clearBtn").onclick=()=>{
+  if(confirm("Biztosan törölni szeretnél minden adatot? Ez nem vonható vissza.")){
+    data={entries:[], goal:0}; saveData(); $("settingsDialog").close(); toast("Minden adat törölve.");
+  }
+};
+
+let calendarCursor = new Date();
+calendarCursor.setDate(1);
+let selectedCalendarDate = new Date();
+selectedCalendarDate.setHours(0,0,0,0);
+
+function dateKey(value){
+  const d = new Date(value);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function entriesForDate(date){
+  const key = dateKey(date);
+  return data.entries.filter(e => e.type !== "payment" && dateKey(e.createdAt) === key);
+}
+function renderSelectedDay(){
+  const entries = entriesForDate(selectedCalendarDate);
+  $("selectedDayTitle").textContent = new Intl.DateTimeFormat("hu-HU", {
+    year:"numeric", month:"long", day:"numeric", weekday:"long"
+  }).format(selectedCalendarDate);
+  $("selectedDayTotal").textContent = money(entries.reduce((s,e)=>s+Number(e.amount||0),0));
+  if(!entries.length){
+    $("selectedDayEntries").textContent = "Ezen a napon még nincs bejegyzés.";
+    return;
+  }
+  $("selectedDayEntries").innerHTML = entries.map(e=>{
+    const label=e.type==="full"?"Teljes nap":e.type==="half"?"Fél nap":(e.note||"Egyedi összeg");
+    return `• ${escapeHtml(label)} – ${money(e.amount)} ${e.paid?"(kifizetve)":"(nincs kifizetve)"}`;
+  }).join("<br>");
+}
+function renderCalendar(){
+  const year=calendarCursor.getFullYear();
+  const month=calendarCursor.getMonth();
+  $("calendarMonth").textContent = new Intl.DateTimeFormat("hu-HU", {
+    year:"numeric", month:"long"
+  }).format(calendarCursor);
+
+  const first = new Date(year,month,1);
+  const mondayIndex = (first.getDay()+6)%7;
+  const gridStart = new Date(year,month,1-mondayIndex);
+  const todayKey=dateKey(new Date());
+  const selectedKey=dateKey(selectedCalendarDate);
+  const grid=$("calendarGrid");
+  grid.innerHTML="";
+
+  for(let i=0;i<42;i++){
+    const d=new Date(gridStart);
+    d.setDate(gridStart.getDate()+i);
+    const items=entriesForDate(d);
+    const hasFull=items.some(e=>e.type==="full");
+    const hasHalf=items.some(e=>e.type==="half");
+    const allPaid=items.length>0 && items.every(e=>e.paid);
+    const btn=document.createElement("button");
+    btn.className="cal-day";
+    if(d.getMonth()!==month) btn.classList.add("other");
+    if(dateKey(d)===todayKey) btn.classList.add("today");
+    if(dateKey(d)===selectedKey) btn.classList.add("selected");
+    if(hasFull && hasHalf) btn.classList.add("mixed-day");
+    else if(hasFull) btn.classList.add("full-day");
+    else if(hasHalf || items.length) btn.classList.add("half-day");
+    if(allPaid) btn.classList.add("paid-day");
+    btn.textContent=d.getDate();
+    btn.onclick=()=>{
+      selectedCalendarDate=new Date(d);
+      selectedCalendarDate.setHours(0,0,0,0);
+      calendarCursor=new Date(d.getFullYear(),d.getMonth(),1);
+      renderCalendar();
+    };
+    grid.appendChild(btn);
+  }
+  renderSelectedDay();
+}
+
+let lastTouchEnd = 0;
+document.addEventListener("touchend", function(event){
+  const now = Date.now();
+  if(now - lastTouchEnd <= 300) event.preventDefault();
+  lastTouchEnd = now;
+}, {passive:false});
+
+render();
+</script>
+</body>
+</html>
